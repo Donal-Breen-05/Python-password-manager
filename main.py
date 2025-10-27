@@ -53,7 +53,7 @@ def newUser(username, masterPassword):
     encryptedPassword = encryptPassword(cipher)
 
 #add 
-def addUserPass(password, site): 
+def addUserPass(password, app): 
 
     try: 
         with open("data.json" , "w") as file: 
@@ -63,6 +63,15 @@ def addUserPass(password, site):
         data = [] 
 
     #encrypt passwords 
+    encryptedPassword = encryptPassword(cipher , password)
+
+    #dictionary 
+    item = {"app": app , "password": encryptedPassword }
+    data.append(item) 
+    
+    #save to file 
+    with open("data.json" , "w") as file: 
+        json.dump(data , file , indent=4) 
 
 #login 
 def login(userName, password):
@@ -98,7 +107,72 @@ def viewPasswords():
     except FileNotFoundError: 
         print("\nYou havent saved any passwords")
 
+"""
+    MAIN loop 
+"""
+while True: 
+    
+    #gui 
+    print("\tPassword manager\n") 
+    print("-------------------")
+    print("(1) login")
+    print("(2) register")
+    print("(3) exit")
 
+    #choice
+    option = int(input("choose option: "))
+    match option: 
+        case 1: 
+            #login user 
+            print("\nEnter your User Name and password: ")
+            userName = input("USERNAME: ")
+            masterPassword = input("PASSWORD: ")
+            login(userName, masterPassword)
+            
+
+            #ADD PASSWORDS LOOP  
+            while True: 
+                 
+                # add or view passwords 
+                print("(1) add ") 
+                print("(2) view password")
+                print("(3) view all") 
+                print("(4) return to Menu") 
+            
+                option2 = int(input("choose option:"))
+            
+                match option2: 
+                    case 1: 
+                        #add password
+                        addUserPass()
+                    case 2: 
+                        #view specific password 
+                        viewPasswords()
+                    case 3: 
+                        #view all 
+                        viewPasswords()
+                    case 4: 
+                        #return to menu 
+                        break 
+                    case _: 
+                        print("invalid option!") 
+                        #TODO: finish the add/remove passwords code 
+
+
+
+        case 2: 
+            #register user  
+            print("\nEnter your User Name and password: ")
+            userName = input("USERNAME: ")
+            masterPassword = input("PASSWORD: ")
+            newUser(userName, masterPassword) 
+        case 3: 
+            #exit
+            print("\nGoodbye!") 
+            sys.exit()
+        #default 
+        case _: 
+            print("invalid input! ") 
 
 
 
