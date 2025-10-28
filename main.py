@@ -13,9 +13,9 @@ the majority of the encryption
 
 #hashing 
 def hashPassword(password): 
-    hash = haslib.sha256()
-    sha256.update(masterPassword.encode())
-    return sha256.hexdigest 
+    hashPass = hashlib.sha256()
+    hashPass.update(password.encode())
+    return hashPass.hexdigest()
 
 
 #encryption key 
@@ -27,48 +27,66 @@ def initCipher(key):
     return Fernet(key)
 
 #encrypts passwords 
-def enryptPassword(cipher, password): 
+def encryptPassword(cipher, password): 
     return cipher.encrypt(password.encode()).decode()
 
+#decrypt 
+def decryptPassword(cipher, encryptedPassword):
+    return cipher.decrypt(encryptedPassword.encode()).decode()
 
 """ 
     Users and User data 
 the functions that take care of user data 
 """
 
-def newUser(username, masterPassword): 
-    hash = masterPasswordHash(masterPassword) 
-    
-    userData = {'UserName': username , 'MasterPassword': hash }
-    fileName = 'data.json' 
+def newUser(userName, masterPassword): 
+    hashPass = hashPassword(masterPassword) 
+    key = makeKey().decode()
 
-    if os.exists(fileName): 
-        with open(fileName , "a") as file: 
-            json.dump(user_data, file)
-            print("\nUser added\n")
+    userData = {'userName': userName , 'masterPassword': hashPass, 'key': key, 'passwords': []}
+    fileName = 'data.json' 
+    
+    if os.path.exists(fileName): 
+        with open(fileName , "r") as file: 
+            try:
+                data = json.load(file)
+            except json.JSONDecodeError: 
+                data = {}
+        
+        #adds the new user
+        data[userName] = userData
+        
+        with open(fileName , "w") as file: 
+            json.dump(data, file, indent=4) 
+            print("\nUser added!\n") 
+
     else: 
-        with open(fileName , "x") as file: 
-            json.dump(userData, file) 
+        with open(fileName , "w") as file: 
+            json.dump({userName: userData}, file, indent=4)
             print("user added") 
-    encryptedPassword = encryptPassword(cipher)
 
 #add 
-def addUserPass(password, app): 
+def addUserPass(userName, password, app, cipher): 
 
     try: 
-        with open("data.json" , "w") as file: 
+        with open("data.json" , "r") as file: 
             data = json.load(file)
-    except json.JSONDecodeError:
+    except (json.JSONDecodeError, FileNotFoundError):
         #error check for empty or broken json 
-        data = [] 
+        data = {}
 
     #encrypt passwords 
     encryptedPassword = encryptPassword(cipher , password)
 
     #dictionary 
     item = {"app": app , "password": encryptedPassword }
-    data.append(item) 
     
+    if userName not in data: 
+        print("\nUser not found!\n")
+        sys.exit()
+
+    data[userName]["passwords"].append(item) 
+
     #save to file 
     with open("data.json" , "w") as file: 
         json.dump(data , file , indent=4) 
@@ -77,14 +95,26 @@ def addUserPass(password, app):
 def login(userName, password):
     try: 
         with open("data.json") as file: 
-            userData = json.load(file) 
+            allUsers = json.load(file) 
         
+        #error checking for user name 
+        if userName not in allUsers: 
+            print("not registered") 
+            sys.exit()
+        
+
         #check user entered password with master password
+        userData = allUsers[userName]
         masterPasswordHash = userData.get("masterPassword")
-        passwordAttemptHash = hashPassword(passwordAttemptHash)
+        passwordAttemptHash = hashPassword(password)
         
         if passwordAttemptHash == masterPasswordHash and userName == userData.get("userName"):
             print("\nlogin successful")
+            
+            #global for the rest of the program 
+            global cipher 
+            # allows the cipher to be made and stored in the json 
+            cipher = initCipher(userData["key"].encode())
         else: 
             print("\nlogin unsuccessful")
             #exit
@@ -100,9 +130,10 @@ def viewPasswords():
         with open("data.json", "r") as data:
             view = json.load(data)
             print("\nyour passwords")
-
-            for password in view: 
-                print(x["website"])
+            
+            for entry in view[userName]["passwords"]: 
+                decrypted = decryptPassword(cipher , entry["password"])
+                print(f"{entry['app']}: {decrypted}")
             print("\n")
     except FileNotFoundError: 
         print("\nYou havent saved any passwords")
@@ -144,19 +175,18 @@ while True:
                 match option2: 
                     case 1: 
                         #add password
-                        addUserPass()
-                    case 2: 
-                        #view specific password 
-                        viewPasswords()
-                    case 3: 
+                        app =input("APP:")
+                        password = input("PASSWORD:")
+                        addUserPass(userName , password , app, cipher)
+                    case 2:                    case 3: 
                         #view all 
                         viewPasswords()
-                    case 4: 
+                    case 3: 
                         #return to menu 
                         break 
                     case _: 
                         print("invalid option!") 
-                        #TODO: finish the add/remove passwords code 
+                        
 
 
 
