@@ -178,7 +178,7 @@ while True:
                         app =input("APP:")
                         password = input("PASSWORD:")
                         addUserPass(userName , password , app, cipher)
-                    case 2:                    case 3: 
+                    case 2:            
                         #view all 
                         viewPasswords()
                     case 3: 
