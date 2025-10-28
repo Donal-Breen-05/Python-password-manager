@@ -166,9 +166,8 @@ while True:
                  
                 # add or view passwords 
                 print("(1) add ") 
-                print("(2) view password")
-                print("(3) view all") 
-                print("(4) return to Menu") 
+                print("(2) view passwords")
+                print("(3) return to Menu") 
             
                 option2 = int(input("choose option:"))
             
